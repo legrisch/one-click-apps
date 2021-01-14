@@ -1,0 +1,79 @@
+captainVersion: 4
+services:
+    $$cap_appname:
+        volumes:
+            - $$cap_appname-data:/app
+        restart: always
+        environment:
+            PHP_MEMORY_LIMIT: $$cap_php_memory_limit
+            PHP_MAX_EXECUTION_TIME: $$cap_php_max_exec_time
+            PHP_POST_MAX_SIZE: $$cap_php_post_max_size
+            PHP_UPLOAD_MAX_FILESIZE: $$cap_php_upload_max_filesize
+        caproverExtra:
+            dockerfileLines:
+                # php nginx image
+                - FROM webdevops/php-nginx:7.4
+                # Default Env
+                - ENV WEB_DOCUMENT_ROOT=/app/public
+                # install statamic in dir /app
+                - WORKDIR /
+                - RUN composer create-project --prefer-dist statamic/statamic app
+                # add default user
+                - WORKDIR /app/users
+                - "RUN echo \"super: true\" > $$cap_user_email.yaml"
+                - "RUN echo \"first_name: '$$cap_user_first_name'\" >> $$cap_user_email.yaml"
+                - "RUN echo \"last_name: '$$cap_user_last_name'\" >> $$cap_user_email.yaml"
+                - "RUN echo \"email: '$$cap_user_email'\" >> $$cap_user_email.yaml"
+                - "RUN echo \"password: '$$cap_user_password'\" >> $$cap_user_email.yaml"
+                # enforce URI scheme (see https://stackoverflow.com/questions/29912997/laravel-routes-behind-reverse-proxy)
+                - RUN echo "use Illuminate\Support\Facades\App;" >> /app/routes/web.php
+                - RUN echo "URL::forceScheme('$$cap_uri_scheme');" >> /app/routes/web.php
+                # modify .env file
+                - RUN rm /app/.env.example
+                - RUN sed -i 's/APP_NAME.*/APP_NAME=$$cap_app_name/' /app/.env
+                - RUN sed -i 's/APP_URL.*/APP_URL=$$cap_app_url/' /app/.env
+                - RUN sed -i 's/ASSET_URL.*/ASSET_URL=$$cap_app_url/' /app/.env
+                # Permissions
+                - "RUN chown -R application: /app"
+                # Port
+                - EXPOSE 80
+            containerHttpPort: '80'
+caproverOneClickApp:
+    variables:
+        - id: $$cap_app_url
+          label: App Url
+          description: The domain on which your statamic instance will be running on
+        - id: $$cap_app_name
+          label: App Name
+          defaultValue: Statamic
+        - id: $$cap_user_email
+          label: Default User Email
+        - id: $$cap_user_password
+          label: Default User Password
+        - id: $$cap_user_first_name
+          label: Default User First Name
+        - id: $$cap_user_last_name
+          label: Default User Last Name
+        - id: $$cap_uri_scheme
+          label: URI scheme
+          defaultValue: https
+        - id: $$cap_php_memory_limit
+          label: PHP_MEMORY_LIMIT
+          defaultValue: 1G
+        - id: $$cap_php_max_exec_time
+          label: PHP_MAX_EXECUTION_TIME
+          defaultValue: 300
+        - id: $$cap_php_post_max_size
+          label: PHP_POST_MAX_SIZE
+          defaultValue: 50M
+        - id: $$cap_php_upload_max_filesize
+          label: PHP_UPLOAD_MAX_FILESIZE
+          defaultValue: 50M
+    instructions:
+        start: |-
+            Statamic bladibladibla
+        end: |-
+            Successfully deployed Statamic.
+    displayName: Statamic
+    isOfficial: false
+    description: Build beautiful, easy to manage websites. The flat-first, open source, Laravel + git powered CMS.
