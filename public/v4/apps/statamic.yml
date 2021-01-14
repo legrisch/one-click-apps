@@ -30,9 +30,11 @@ services:
                 - RUN echo "URL::forceScheme('$$cap_uri_scheme');" >> /app/routes/web.php
                 # modify .env file
                 - RUN rm /app/.env.example
-                - RUN sed -i 's/APP_NAME.*/APP_NAME=$$cap_app_name/' /app/.env
-                - RUN sed -i 's/APP_URL.*/APP_URL=$$cap_app_url/' /app/.env
-                - RUN sed -i 's/ASSET_URL.*/ASSET_URL=$$cap_app_url/' /app/.env
+                - RUN sed -i '/APP_NAME=.*/d' /app/.env
+                - RUN sed -i '/APP_URL=.*/d' /app/.env
+                - RUN echo 'ASSET_URL=$$cap_app_url' >> /app/.env
+                - RUN echo 'APP_URL=$$cap_app_url' >> /app/.env
+                - RUN echo 'APP_NAME="$$cap_app_name"' >> /app/.env
                 # Permissions
                 - "RUN chown -R application: /app"
                 # Port
@@ -42,7 +44,7 @@ caproverOneClickApp:
     variables:
         - id: $$cap_app_url
           label: App Url
-          description: The domain on which your statamic instance will be running on
+          description: The domain on which your statamic instance will be running on, with URI scheme, e.g. https://example.org
         - id: $$cap_app_name
           label: App Name
           defaultValue: Statamic
@@ -71,9 +73,10 @@ caproverOneClickApp:
           defaultValue: 50M
     instructions:
         start: |-
-            Statamic bladibladibla
+            Build beautiful, easy to manage websites. The flat-first, open source, Laravel + git powered CMS.
         end: |-
-            Successfully deployed Statamic.
+            Successfully deployed Statamic. Your might want to have a look at /app/.env to make further customizations.
+            See https://dockerfile.readthedocs.io/en/latest/content/DockerImages/dockerfiles/php-nginx.html for available ENV variables.
     displayName: Statamic
     isOfficial: false
     description: Build beautiful, easy to manage websites. The flat-first, open source, Laravel + git powered CMS.
